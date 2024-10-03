@@ -1,0 +1,49 @@
+# Core Libraries
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
+packaging
+einops
+
+# Image and Video Processing
+opencv-python
+opencv-python-headless
+trimesh
+PyMCubes
+imageio-ffmpeg
+lpips
+face_alignment
+dearpygui
+
+# Audio Processing
+librosa
+soundfile
+python_speech_features
+resampy
+numba
+#pyaudio  # Uncomment if needed
+
+# Machine Learning and Deep Learning
+torch-ema
+tensorboardX
+transformers
+diffusers
+accelerate
+omegaconf
+
+# Web and Networking
+flask
+flask_sockets
+aiortc
+aiohttp_cors
+ffmpeg-python
+
+# Utilities
+ninja
+tqdm
+rich
+configargparse
+edge_tts==6.1.11
+

@@ -1,0 +1,7 @@
+[
+   {
+        "audiotype":2, 
+        "imgpath":"data/customvideo/your_image", 
+        "audiopath":"data/customvideo/your_audio.wav"
+    }
+]
