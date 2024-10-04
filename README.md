@@ -194,9 +194,13 @@ After running, copy the files from results/avatars to the data/avatars directory
 │   └── └── ngp_kf.pth
 
 ```
+## 5. Docker Run
+No need for previous installation, run directly.
+```bash
+docker run --gpus all -it --network=host --rm registry.cn-beijing.aliyuncs.com/codewithgpu2/lipku-metahuman-stream:vjo1Y6NJ3N
+```
 
-## 5. Performance analysis and optimization strategies
-# Performance Analysis and Optimization Strategies
+## 6. Performance analysis and optimization strategies
 
 ## 1. Frame Rate Enhancement
 
@@ -230,7 +234,7 @@ After running, copy the files from results/avatars to the data/avatars directory
 - **Optimization**: Adjust the SRS server settings to minimize buffering delays, such as the `gop_cache` or `queue_length`.
 
 
-## 6. TODO
+## 7. TODO
  1.Implemented ChatGPT for interactive dialogues with digital humans  
  2.Integrated voice cloning technology  
  3.Enabled video replacement for digital humans when muted  
