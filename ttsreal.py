@@ -6,9 +6,7 @@ import asyncio
 import edge_tts
 
 from typing import AsyncIterator
-
 import aiohttp
-
 from io import BytesIO
 from enum import Enum
 
@@ -111,7 +109,6 @@ class BaseTTS:
         """
         raise NotImplementedError("Subclasses must implement txt_to_audio method")
 
-
 ###########################################################################################
 class EdgeTTS(BaseTTS):
     """
@@ -129,11 +126,16 @@ class EdgeTTS(BaseTTS):
             msg (str): The text message to convert to audio.
         """
         voicename = "zh-CN-YunxiaNeural"
-        text = msg
         start_time = time.time()
-        await self.__main(voicename, text)
+        await self.__main(voicename, msg)
         print(f'-------EdgeTTS processing time: {time.time() - start_time:.4f}s')
 
+        await self.__stream_audio_chunks()
+
+    async def __stream_audio_chunks(self):
+        """
+        Streams the audio from the input stream in chunks to the parent handler.
+        """
         self.input_stream.seek(0)
         stream = await self.__create_bytes_stream(self.input_stream)
         streamlen = stream.shape[0]
@@ -181,14 +183,8 @@ class EdgeTTS(BaseTTS):
         communicate = edge_tts.Communicate(text, voicename)
         first_chunk = True
         async for chunk in communicate.stream():
-            if first_chunk:
-                first_chunk = False
             if chunk["type"] == "audio" and self.state == State.RUNNING:
                 self.input_stream.write(chunk["data"])
-            elif chunk["type"] == "WordBoundary":
-                pass  # Handle word boundaries if needed
-
-
 ###########################################################################################
 class VoitsTTS(BaseTTS):
     """
@@ -268,17 +264,25 @@ class VoitsTTS(BaseTTS):
         """
         async for chunk in audio_stream:
             if chunk and len(chunk) > 0:
-                loop = asyncio.get_event_loop()
-                stream = np.frombuffer(chunk, dtype=np.int16).astype(np.float32) / 32767
-                stream = await loop.run_in_executor(None, resampy.resample, stream, 32000, self.sample_rate)
-                streamlen = stream.shape[0]
-                idx = 0
-                while streamlen >= self.chunk:
-                    self.parent.put_audio_frame(stream[idx:idx + self.chunk])
-                    streamlen -= self.chunk
-                    idx += self.chunk
+                await self.__process_and_stream_chunk(chunk, 32000)
 
+    async def __process_and_stream_chunk(self, chunk: bytes, original_sample_rate: int):
+        """
+        Processes a single audio chunk and sends it to the parent handler.
 
+        Args:
+            chunk (bytes): Audio chunk to process.
+            original_sample_rate (int): Original sample rate of the audio chunk.
+        """
+        loop = asyncio.get_event_loop()
+        stream = np.frombuffer(chunk, dtype=np.int16).astype(np.float32) / 32767
+        stream = await loop.run_in_executor(None, resampy.resample, stream, original_sample_rate, self.sample_rate)
+        streamlen = stream.shape[0]
+        idx = 0
+        while streamlen >= self.chunk:
+            self.parent.put_audio_frame(stream[idx:idx + self.chunk])
+            streamlen -= self.chunk
+            idx += self.chunk
 ###########################################################################################
 class XTTS(BaseTTS):
     """
@@ -394,12 +398,22 @@ class XTTS(BaseTTS):
         """
         async for chunk in audio_stream:
             if chunk and len(chunk) > 0:
-                loop = asyncio.get_event_loop()
-                stream = np.frombuffer(chunk, dtype=np.int16).astype(np.float32) / 32767
-                stream = await loop.run_in_executor(None, resampy.resample, stream, 24000, self.sample_rate)
-                streamlen = stream.shape[0]
-                idx = 0
-                while streamlen >= self.chunk:
-                    self.parent.put_audio_frame(stream[idx:idx + self.chunk])
-                    streamlen -= self.chunk
-                    idx += self.chunk
+                await self.__process_and_stream_chunk(chunk, 24000)
+
+    async def __process_and_stream_chunk(self, chunk: bytes, original_sample_rate: int):
+        """
+        Processes a single audio chunk and sends it to the parent handler.
+
+        Args:
+            chunk (bytes): Audio chunk to process.
+            original_sample_rate (int): Original sample rate of the audio chunk.
+        """
+        loop = asyncio.get_event_loop()
+        stream = np.frombuffer(chunk, dtype=np.int16).astype(np.float32) / 32767
+        stream = await loop.run_in_executor(None, resampy.resample, stream, original_sample_rate, self.sample_rate)
+        streamlen = stream.shape[0]
+        idx = 0
+        while streamlen >= self.chunk:
+            self.parent.put_audio_frame(stream[idx:idx + self.chunk])
+            streamlen -= self.chunk
+            idx += self.chunk
